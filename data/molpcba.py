@@ -18,7 +18,7 @@ import hashlib
 from tqdm.std import tqdm
 
 
-def laplace_decomp(graph, max_freqs):
+def laplace_decomp(graph, max_freqs, device):
     g, label = graph
 
     # Laplacian
@@ -40,9 +40,9 @@ def laplace_decomp(graph, max_freqs):
     EigVecs = F.normalize(EigVecs, p=2, dim=1, eps=1e-12, out=None)
 
     if n < max_freqs:
-        g.ndata['EigVecs'] = F.pad(EigVecs, (0, max_freqs - n), value=float('nan'))
+        g.ndata['EigVecs'] = F.pad(EigVecs, (0, max_freqs - n), value=float('nan')).to(device)
     else:
-        g.ndata['EigVecs'] = EigVecs
+        g.ndata['EigVecs'] = EigVecs.to(device)
 
     # Save eigenvalues and pad
     EigVals = torch.from_numpy(np.sort(np.abs(np.real(
@@ -54,7 +54,7 @@ def laplace_decomp(graph, max_freqs):
         EigVals = EigVals.unsqueeze(0)
 
     # Save EigVals node features
-    g.ndata['EigVals'] = EigVals.repeat(g.number_of_nodes(), 1).unsqueeze(2)
+    g.ndata['EigVals'] = EigVals.repeat(g.number_of_nodes(), 1).unsqueeze(2).to(device)
 
     return g, label
 
